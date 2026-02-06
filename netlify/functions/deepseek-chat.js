@@ -71,11 +71,6 @@ export async function handler(event) {
     if (messages.length > MAX_MESSAGES) return json(400, { error: { message: `messages too many (max ${MAX_MESSAGES})` } });
 
     const streamRequested = Boolean(reqJson.stream);
-    if (streamRequested) {
-      return json(400, {
-        error: { message: 'Streaming is not supported on Netlify. Please disable stream and retry.' }
-      });
-    }
 
     const normalizedMessages = [];
     for (const msg of messages) {
@@ -119,6 +114,42 @@ export async function handler(event) {
 
     const contentType = upstream.headers.get('content-type') || 'application/json; charset=utf-8';
     const text = await upstream.text();
+
+    if (streamRequested && upstream.ok) {
+      let upstreamJson;
+      try {
+        upstreamJson = JSON.parse(text);
+      } catch {
+        return json(502, { error: { message: 'Upstream returned non-JSON response' } });
+      }
+
+      const choice0 = upstreamJson?.choices?.[0];
+      const message0 = choice0?.message;
+      const content = message0?.content;
+      const reasoningContent = message0?.reasoning_content;
+      const finishReason = choice0?.finish_reason ?? choice0?.finishReason;
+
+      if (typeof content !== 'string') {
+        return json(502, { error: { message: 'Upstream returned unexpected response shape' } });
+      }
+
+      const delta = { content };
+      if (typeof reasoningContent === 'string' && reasoningContent) delta.reasoning_content = reasoningContent;
+
+      const sseEventChoice = { delta };
+      if (typeof finishReason === 'string' && finishReason) sseEventChoice.finish_reason = finishReason;
+
+      const sseBody = `data: ${JSON.stringify({ choices: [sseEventChoice] })}\n\ndata: [DONE]\n\n`;
+      return {
+        statusCode: upstream.status,
+        headers: {
+          'Content-Type': 'text/event-stream; charset=utf-8',
+          'Cache-Control': 'no-store'
+        },
+        body: sseBody
+      };
+    }
+
     return {
       statusCode: upstream.status,
       headers: {
