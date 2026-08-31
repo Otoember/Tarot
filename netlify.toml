@@ -1,12 +1,7 @@
 [build]
+  base = "frontend"
   command = "npm run build"
   publish = "dist"
-  functions = "netlify/functions"
-
-[[redirects]]
-  from = "/api/deepseek/chat"
-  to = "/.netlify/functions/deepseek-chat"
-  status = 200
 
 [[redirects]]
   from = "/*"

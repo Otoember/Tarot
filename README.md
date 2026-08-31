@@ -51,6 +51,21 @@ npm run dev
 
 见 `.env.example`。
 
+## Netlify 远程访问部署（前端）
+
+本仓库已配置 `netlify.toml`，Netlify 会从 `/frontend` 构建并发布静态站点。
+
+1. 将仓库推送到 GitHub 后，在 Netlify 选择 **Add new site -> Import from Git**。
+2. 选择本仓库，Build 设置会自动读取：
+   - Base directory: `frontend`
+   - Build command: `npm run build`
+   - Publish directory: `dist`
+3. 在 Netlify 的 **Site configuration -> Environment variables** 配置：
+   - `VITE_API_BASE_URL=https://你的后端域名/api`
+4. 重新 Deploy 后即可通过 Netlify 域名远程访问前端页面。
+
+> 说明：Netlify 主要托管静态前端，本项目 FastAPI 后端建议部署到 Azure Container Apps / Render / Railway 等，再把后端地址填入 `VITE_API_BASE_URL`。
+
 ## Testing
 
 ```bash
