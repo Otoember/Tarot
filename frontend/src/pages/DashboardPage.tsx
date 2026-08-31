@@ -10,6 +10,7 @@ export default function DashboardPage() {
 
   if (account.isLoading) return <div>Loading...</div>
   if (account.error) return <div className="error">账户加载失败</div>
+  if (!account.data) return <div className="error">账户数据为空</div>
 
   return (
     <>

@@ -21,6 +21,7 @@ export default function StockPage() {
 
   if (q.isLoading) return <div>Loading...</div>
   if (q.error) return <div className="error">行情加载失败</div>
+  if (!q.data) return <div className="error">暂无行情</div>
 
   return (
     <div className="card">

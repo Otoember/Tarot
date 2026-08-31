@@ -5,6 +5,7 @@ export default function PortfolioPage() {
   const data = useQuery({ queryKey: ['portfolio'], queryFn: getPortfolio })
   if (data.isLoading) return <div>Loading...</div>
   if (data.error) return <div className="error">持仓加载失败</div>
+  if (!data.data) return <div className="error">暂无持仓</div>
 
   return (
     <div className="card">

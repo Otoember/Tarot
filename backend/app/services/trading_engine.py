@@ -1,4 +1,3 @@
-from datetime import date
 from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
