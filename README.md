@@ -1,159 +1,97 @@
-# 塔罗牌解读网页应用（离线 + DeepSeek）
+# A 股虚拟炒股平台（MVP）
 
-这是一个可本地运行的「塔罗牌解读」网页应用：不填 Key 也能离线解读；填入 DeepSeek API Key 后可获得更强、支持流式输出的解读。
+一个可本地运行、可继续扩展的虚拟炒股系统，支持 A 股模拟行情与交易，不连接真实券商账户。
 
-把这个文件夹下载/解压后，在文件夹里打开终端依次运行：
+## Features
+
+- 用户注册/登录（JWT）
+- 自动初始化 100 万虚拟资金（可配置）
+- 股票搜索、行情查看、历史价格
+- 市价买入/卖出
+- T+1 限制
+- 手续费计算
+- 持仓、订单、成交、资产曲线、排行榜
+- Docker Compose 一键启动
+- GitHub Actions CI
+
+## Tech Stack
+
+- Backend: FastAPI, SQLAlchemy 2.x, Pydantic v2, Alembic, pytest
+- Frontend: React, TypeScript, Vite, React Router, TanStack Query, Axios, Recharts, Tailwind CSS
+- DB: SQLite (dev), PostgreSQL (prod)
+
+## Quick Start
 
 ```bash
+cp .env.example .env
+docker compose up --build
+```
+
+- Frontend: http://localhost:5173
+- Backend: http://localhost:8000
+- Swagger: http://localhost:8000/docs
+
+## Local Dev
+
+Backend:
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+Frontend:
+```bash
+cd frontend
 npm install
 npm run dev
 ```
 
-然后用浏览器打开终端提示的地址（一般是 `http://localhost:5173`）。
+## Environment Variables
 
-## 功能概览
+见 `.env.example`。
 
-- **离线基础解读（必有）**：不需要网络/Key，基于本地牌义库生成结构化解读（总览→逐牌位→卡点→建议→趋势→提醒），并额外提供：
-  - **适用领域提示**（更贴近主题）
-  - **常见误区**（避免踩坑）
-  - **提问引导句**（帮助把问题问得更清晰）
-- **DeepSeek 增强解读（可选）**：在页面粘贴 Key 后，通过本地代理调用 DeepSeek Chat Completions，支持：
-  - 模型选择：`deepseek-chat` / `deepseek-reasoner`
-  - `reasoner` 若返回 `reasoning_content`：UI 可折叠展示推理内容
-  - **stream=true 流式输出**：长文本逐段生成，体验更接近实时
-- **牌阵库**：内置多种牌阵，且支持按主题推荐更合适的牌阵
-- **抽牌**：自动随机抽牌（不重复、可开关逆位）+ 手动录入现实抽到的牌
-- **历史记录**：本地保存（浏览器 `localStorage`），支持搜索/筛选（主题/牌阵/日期范围）
-- **导出**：单次/历史记录支持导出 Markdown / JSON / PNG 长图
-- **分享文本**：一键生成可复制文本，并对疑似隐私内容进行遮罩
+## Netlify 远程访问部署（前端）
 
-## 安全说明（API Key）
+本仓库已配置 `netlify.toml`，Netlify 会从 `/frontend` 构建并发布静态站点。
 
-- **不要把 API Key 写进仓库**（不要写进代码、不要提交到 Git、不要放到 `.env` 并分发给别人）。
-- 前端**不直接请求** `https://api.deepseek.com`，而是请求同源的本地代理接口：
-  - `POST /api/deepseek/chat`
-- Key 在前端仅用于本次会话（可选“记住本次会话”，存 `sessionStorage`），后端也**不落盘**，只在请求转发时使用。
+1. 将仓库推送到 GitHub 后，在 Netlify 选择 **Add new site -> Import from Git**。
+2. 选择本仓库，Build 设置会自动读取：
+   - Base directory: `frontend`
+   - Build command: `npm run build`
+   - Publish directory: `dist`
+3. 在 Netlify 的 **Site configuration -> Environment variables** 配置：
+   - `VITE_API_BASE_URL=https://你的后端域名/api`
+4. 重新 Deploy 后即可通过 Netlify 域名远程访问前端页面。
 
-## 环境要求
+> 说明：Netlify 主要托管静态前端，本项目 FastAPI 后端建议部署到 Azure Container Apps / Render / Railway 等，再把后端地址填入 `VITE_API_BASE_URL`。
 
-- Node.js：建议 **18+ / 20+**
-- 包管理器：npm（默认即可）
-
-## 运行命令
-
-开发模式（推荐，热更新）：
+## Testing
 
 ```bash
-npm install
-npm run dev
+cd backend && pytest
+cd frontend && npm run build
 ```
 
-生产构建 + 本地预览：
+## Project Structure
 
-```bash
-npm run build
-npm run preview
-```
-直接运行
-npm.cmd install
-npm.cmd run dev
+- `/backend` 后端服务
+- `/frontend` 前端应用
+- `/docs` 文档
+- `docker-compose.yml` 本地编排
 
-默认地址：
-- 开发：`http://localhost:5173`
-- 预览：`http://localhost:4173`
+## Roadmap
 
-同一局域网分享：
-- 项目已开启 `host: true`，运行后可用 `http://你的IP:5173`（或 `4173`）访问
-- Windows 可能需要在防火墙里放行该端口
+- V1.1 限价单与撤单
+- V1.2 完整交易日历
+- V1.3 模拟比赛与好友系统
+- V1.5 对比沪深300
+- V2 策略回测与 AI 研究助手（仅研究，不自动实盘）
 
-## 使用说明（面向用户）
+## Screenshots
 
-### 1) 先提问再抽牌
+- TODO
 
-在「占卜」页：
-- 先填写：**问题**、**时间范围**、**主题**
-- 选择牌阵（也可使用系统推荐）
+## Disclaimer
 
-### 2) 抽牌方式
-
-- **自动抽牌**：一键随机抽取（不重复；可开关“逆位”）
-- **手动录入**：现实中你自己抽牌后，在页面逐个选择对应牌与正/逆位
-
-### 3) 看离线解读（必有）
-
-不填 Key 也会生成离线结构化解读，并附“适用领域提示 / 常见误区 / 提问引导句”，更像在“回答你的问题”。
-
-### 4) 用 DeepSeek 增强（可选）
-
-在左侧「DeepSeek 设置」中：
-- 粘贴 **DeepSeek API Key**
-- 选择模型（默认 `deepseek-chat`；需要推理可选 `deepseek-reasoner`）
-- 点击「生成 DeepSeek 解读」
-
-说明：
-- 使用流式输出时会逐段显示内容；生成完成后不会继续显示“生成中”
-
-### 5) 保存 / 导出 / 分享
-
-- 「保存到历史」：保存在当前浏览器（`localStorage`）
-- 「导出本次」：Markdown / JSON / PNG 长图
-- 「复制分享文本」：自动进行隐私保护（疑似姓名/电话/地址/邮箱/学号等会隐藏提问正文）
-
-## 截图小技巧（缩放快捷键）
-
-浏览器页面缩放：
-- 缩小：`Ctrl + -`
-- 放大：`Ctrl + +`
-- 恢复 100%：`Ctrl + 0`
-
-## 常见问题排查
-
-1) DeepSeek 返回 401/403  
-   - Key 无效、权限不足、复制带了空格/换行；重新粘贴并确认账号权限。
-
-2) DeepSeek 返回 429（限流）  
-   - 降低频率、缩短提问/提示词、稍后重试。
-
-3) DeepSeek 返回 502（网络/代理错误）  
-   - 检查网络/代理软件/公司网络策略；也可能是 DeepSeek 服务波动。
-
-4) 刷新后出现 404 / 白屏  
-   - 请用 `npm run dev` 或 `npm run preview` 打开；不要双击 `index.html` 直接打开（前端路由需要开发服务器/预览服务器支持）。
-
-5) 局域网访问失败  
-   - 确认在同一 Wi‑Fi；用 `http://你的IP:5173` 访问；Windows 防火墙可能需要放行端口。
-
-6) PowerShell 提示 “running scripts is disabled”  
-   - 用 `npm.cmd install` / `npm.cmd run dev`，或自行调整 PowerShell 执行策略（仅当前用户范围）。
-
-
----
-
-下面是一段**“获取 DeepSeek API Key 的小教程”**：
-
-获取 DeepSeek API Key（3 分钟）
-
-打开 DeepSeek 开放平台的 API Keys 页面：
-在浏览器进入 DeepSeek Platform，然后打开 API Keys（官方入口通常是平台里的 API keys 菜单）。
-
-登录/注册账号
-按页面提示完成登录或注册。
-
-创建 Key
-在 API Keys 页面点击 Create / 创建 API key，填写一个名称（比如 tarot-local），确认后会生成一串 Key。
-
-立刻复制并妥善保存
-Key 往往只显示一次，关掉弹窗/页面后可能就看不到了；丢了就需要重新创建。
-
-在本应用里使用
-打开应用侧边栏「DeepSeek 设置」，把 Key 粘贴进去，然后点「生成 DeepSeek 解读」即可（离线解读不受影响）。
-
-✅ 安全提醒：API Key 等同于密码，不要发群/截图，不要写进项目文件或 .env 再分享给别人。
-
-（补充：如果你发现调用失败，有时与余额/计费或平台资源限制有关，可先到平台控制台检查账户状态与余额；之前也出现过因资源紧张暂停充值的情况。）
-
-
----
-
-免责声明：本应用用于自我反思与沟通辅助，不替代医疗/法律/投资等专业建议；任何解读都应被视为“可能性与倾向”，请结合事实与专业意见做决定。
-
+本平台仅用于学习、研究和模拟交易，不构成任何投资建议，不连接真实证券账户。
